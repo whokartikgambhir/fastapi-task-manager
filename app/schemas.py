@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from uuid import UUID
 from datetime import datetime
 from .models import TaskStatus
@@ -27,3 +27,10 @@ class TaskOut(TaskBase):
 
     class Config:
         orm_mode = True   # allows returning SQLAlchemy objects directly
+
+class PaginatedTasks(BaseModel):
+    items: List[TaskOut]
+    page: int
+    limit: int
+    total: int
+    pages: int

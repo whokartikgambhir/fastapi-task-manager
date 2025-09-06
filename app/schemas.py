@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List
 from uuid import UUID
 from datetime import datetime
@@ -6,7 +6,7 @@ from .models import TaskStatus
 
 # Base schema (common fields)
 class TaskBase(BaseModel):
-    title: str
+    title: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
 
 # For creating a new task
@@ -15,8 +15,8 @@ class TaskCreate(TaskBase):
 
 # For updating an existing task
 class TaskUpdate(BaseModel):
-    title: Optional[str]
-    status: Optional[TaskStatus]
+    title: Optional[str] = Field(None, min_length=1, max_length=255)
+    status: Optional[TaskStatus] = None
 
 # For returning task data in responses
 class TaskOut(TaskBase):

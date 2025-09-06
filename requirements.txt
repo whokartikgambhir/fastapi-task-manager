@@ -9,7 +9,7 @@ alembic
 python-json-logger
 # auth
 pyjwt[crypto]
-passlib[bcrypt]  # (only if you add password hashing later)
+passlib[bcrypt]
 # metrics & tracing
 prometheus-fastapi-instrumentator
 opentelemetry-sdk

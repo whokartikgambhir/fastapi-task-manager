@@ -1,8 +1,9 @@
 from typing import List
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Body
 from sqlalchemy.orm import Session
+from pydantic import ValidationError
 
 from .. import schemas, crud, db
 
@@ -10,7 +11,16 @@ router = APIRouter(prefix="/tasks", tags=["tasks"])
 
 
 @router.post("/", response_model=schemas.TaskOut, status_code=status.HTTP_201_CREATED)
-def create_task(task: schemas.TaskCreate, db: Session = Depends(db.get_db)):
+def create_task(payload: dict = Body(...), db: Session = Depends(db.get_db)):
+    """
+    Create a task with strict body validation.
+    Unknown/extra fields are rejected with 422.
+    """
+    try:
+        task = schemas.TaskCreate.model_validate(payload)  # enforces extra='forbid'
+    except ValidationError as e:
+        # Normalize Pydantic validation errors to FastAPI HTTPException shape
+        raise HTTPException(status_code=422, detail=e.errors())
     return crud.create_task(db, task)
 
 
@@ -36,8 +46,21 @@ def get_task(task_id: UUID, db: Session = Depends(db.get_db)):
 
 
 @router.put("/{task_id}", response_model=schemas.TaskOut)
-def update_task(task_id: UUID, payload: schemas.TaskUpdate, db: Session = Depends(db.get_db)):
-    task = crud.update_task(db, task_id, payload)
+def update_task(
+    task_id: UUID,
+    payload: dict = Body(...),
+    db: Session = Depends(db.get_db),
+):
+    """
+    Full update with strict body validation.
+    Unknown/extra fields are rejected with 422.
+    """
+    try:
+        update_data = schemas.TaskUpdate.model_validate(payload)  # enforces extra='forbid'
+    except ValidationError as e:
+        raise HTTPException(status_code=422, detail=e.errors())
+
+    task = crud.update_task(db, task_id, update_data)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
     return task
